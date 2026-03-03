@@ -28,14 +28,14 @@ async function run() {
   });
 
   // get all division data
-  // app.get("/divisionData", async (req, res) => {
-  //   try {
-  //     const divisions = await divisionCollection.find().toArray(); // fetch all
-  //     res.send(divisions);
-  //   } catch (error) {
-  //     res.status(500).send({ error: "Fetch failed" });
-  //   }
-  // });
+  app.get("/divisionData", async (req, res) => {
+    try {
+      const divisions = await divisionCollection.find().toArray(); // fetch all
+      res.send(divisions);
+    } catch (error) {
+      res.status(500).send({ error: "Fetch failed" });
+    }
+  });
 
   try {
     await client.connect();

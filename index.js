@@ -6,7 +6,7 @@ const cors = require("cors");
 const PORT = process.env.PORT;
 
 // middlewares
-app.use(cors());       // allow requests from frontend
+app.use(cors()); // allow requests from frontend
 app.use(express.json()); // parse JSON bodies
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.sltbrlg.mongodb.net/?appName=Cluster0`;
@@ -21,6 +21,7 @@ const client = new MongoClient(uri, {
 async function run() {
   const db = client.db("biryaniChai");
   const divisionCollection = db.collection("divisionData");
+  const iftarCollection = db.collection("iftarData");
 
   app.post("/divisionData", async (req, res) => {
     const data = req.body;
@@ -37,6 +38,27 @@ async function run() {
       res.status(500).send({ error: "Fetch failed" });
     }
   });
+
+  // added iftarData
+  app.post("/iftarData", async (req, res) => {
+    try {
+      const data = req.body;
+      const result = await iftarCollection.insertOne(data);
+      res.send(result);
+    } catch (error) {
+      res.status(500).send({ error: "Failed to insert data" });
+    }
+  });
+
+  // get ifterData
+  // app.get("/ifterData", async (req, res) => {
+  //   try {
+  //     const result = await iftarCollection.find().toArray();
+  //     res.send(result);
+  //   } catch (error) {
+  //     res.status(500).send({ error: "Failed to Fetch" });
+  //   }
+  // });
 
   try {
     await client.connect();

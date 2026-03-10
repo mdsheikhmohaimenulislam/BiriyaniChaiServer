@@ -40,41 +40,112 @@ async function run() {
   });
 
   // added iftarData
-  app.post("/iftarData", async (req, res) => {
+  // app.post("/iftarData", async (req, res) => {
+  //   try {
+  //     const { district, upazila, mosque, iftar, description } = req.body;
+  //     // MongoDB driver expects plain JS object
+  //     const newIftar = {
+  //       district,
+  //       upazila,
+  //       mosque,
+  //       iftar,
+  //       description,
+  //       createdAt: new Date(), // auto add today date
+  //     };
+  //     const result = await iftarCollection.insertOne(newIftar);
+
+  //     res.status(201).send({
+  //       message: "Iftar added successfully",
+  //       data: result,
+  //     });
+  //   } catch (error) {
+  //     console.error(error);
+  //     res.status(500).send({ error: "Failed to insert data" });
+  //   }
+  // });
+app.post("/iftarData", async (req, res) => {
+  try {
+    const { district, upazila, mosque, iftar, description } = req.body;
+
+    // Full address বানানো
+    const address = `${mosque}, ${upazila}, ${district}, Bangladesh`;
+
+    // Geocoding API call
+    const geoRes = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`
+    );
+    const geoData = await geoRes.json();
+
+    const lat = parseFloat(geoData[0]?.lat || 24.8093); // default
+    const lng = parseFloat(geoData[0]?.lon || 88.9406); // default
+
+    const newIftar = {
+      district,
+      upazila,
+      mosque,
+      iftar,
+      description,
+      lat,
+      lng,
+      createdAt: new Date(),
+    };
+
+    const result = await iftarCollection.insertOne(newIftar);
+    res.status(201).send(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Failed to insert data" });
+  }
+});
+
+  // get ifterData.
+  app.get("/ifterData", async (req, res) => {
+    const search = req.query.search;
+
+    let query = {}; // let ব্যবহার করলাম
+
+    if (search) {
+      query = {
+        $or: [
+          { district: { $regex: search, $options: "i" } },
+          { upazila: { $regex: search, $options: "i" } },
+          { mosque: { $regex: search, $options: "i" } },
+        ],
+      };
+    }
+
     try {
-      const data = req.body;
-      const result = await iftarCollection.insertOne(data);
+      const result = await iftarCollection.find(query).toArray();
       res.send(result);
     } catch (error) {
-      res.status(500).send({ error: "Failed to insert data" });
+      console.error(error);
+      res.status(500).send({ error: "Failed to Fetch" });
     }
   });
 
-  // get ifterData.
-app.get("/ifterData", async (req, res) => {
+
+
+
+  app.get("/iftarSearch", async (req, res) => {
+
   const search = req.query.search;
 
+  const query = {
+    $or: [
+      { district: { $regex: search, $options: "i" } },
+      { upazila: { $regex: search, $options: "i" } },
+      { mosque: { $regex: search, $options: "i" } }
+    ]
+  };
 
-  let query = {}; // let ব্যবহার করলাম
+  const result = await iftarCollection.find(query).toArray();
 
-  if (search) {
-    query = {
-      $or: [
-        { district: { $regex: search, $options: "i" } },
-        { upazila: { $regex: search, $options: "i" } },
-        { mosque: { $regex: search, $options: "i" } },
-      ],
-    };
-  }
-
-  try {
-    const result = await iftarCollection.find(query).toArray();
-    res.send(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: "Failed to Fetch" });
-  }
+  res.send(result);
 });
+
+
+
+
 
   try {
     await client.connect();

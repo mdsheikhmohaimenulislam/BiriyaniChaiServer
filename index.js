@@ -30,8 +30,6 @@ async function run() {
 
 
 
-  
-
   // get all division data
   app.get("/divisionData", async (req, res) => {
     try {
